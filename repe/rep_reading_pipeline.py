@@ -3,6 +3,7 @@ from transformers import Pipeline
 import torch
 import numpy as np
 from .rep_readers import DIRECTION_FINDERS, RepReader
+from tqdm import tqdm
 
 class RepReadingPipeline(Pipeline):
 
@@ -18,15 +19,18 @@ class RepReadingPipeline(Pipeline):
         
         if hasattr(outputs, 'encoder_hidden_states') and hasattr(outputs, 'decoder_hidden_states'):
             outputs['hidden_states'] = outputs[f'{which_hidden_states}_hidden_states']
-    
+        
         hidden_states_layers = {}
         for layer in hidden_layers:
             hidden_states = outputs['hidden_states'][layer]
-            hidden_states =  hidden_states[:, rep_token, :].detach()
+            print(layer, hidden_states.shape)
+            
+            hidden_states = hidden_states[:, rep_token, :].detach()
             if hidden_states.dtype == torch.bfloat16:
                 hidden_states = hidden_states.float()
             hidden_states_layers[layer] = hidden_states.detach()
 
+        # print('--------------------------------')
         return hidden_states_layers
 
     def _sanitize_parameters(self, 
